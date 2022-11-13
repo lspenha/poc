@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Box,
   Button,
@@ -23,20 +24,29 @@ interface IFormInput {
   gender: GenderEnum;
 }
 
+const schema = z.object({
+  firstName: z
+    .string()
+    .min(2, { message: "Must be 2 or more characters long" }),
+  gender: z.string({ required_error: "Gender is required" }),
+});
+
 export default function Home() {
   const [gender, setGender] = useState("");
-  const { register, handleSubmit } = useForm<IFormInput>();
 
-  const User = z.object({
-    firstName: z
-      .string()
-      .min(2, { message: "Must be 2 or more characters long" }),
-    gender: z.string({ required_error: "Gender is required" }),
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<IFormInput>({
+    resolver: zodResolver(schema),
   });
 
   const onSubmit: SubmitHandler<IFormInput> = (data) => {
-    User.parse(data);
-    console.log(data);
+    try {
+      // schema.parse(data);
+      console.log(data);
+    } catch (error) {}
   };
 
   const handleChange = (event: SelectChangeEvent) => {
@@ -51,13 +61,17 @@ export default function Home() {
         p: 3,
       }}
     >
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <Box component="form" onSubmit={handleSubmit(onSubmit)}>
         <TextField
           fullWidth
           label="First Name"
           variant="outlined"
+          helperText={
+            errors.firstName?.message && <p>{errors.firstName?.message}</p>
+          }
           {...register("firstName")}
         />
+
         <Box sx={{ pt: 2, pb: 2 }}>
           <FormControl fullWidth>
             <InputLabel>Gender Selection</InputLabel>
@@ -76,7 +90,7 @@ export default function Home() {
         <Button variant="contained" type="submit">
           Send
         </Button>
-      </form>
+      </Box>
     </Box>
   );
 }
